@@ -5,9 +5,13 @@ import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import org.json.JSONObject
 
-class HistoryDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_VERSION) {
+// 싱글턴 패턴
+// SQLiteOpenHelper 객체를 하나만 생성하여 데이터베이스에 접근
+// private constructor -> 외부에서 인스턴스 생성을 막았다
+class HistoryDatabaseHelper private constructor(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_VERSION) {
+    // 동반 객체 -> 클래스의 인스턴스 없이 호출할 수 있는 기능 제공 (싱글턴의 핵심)
     companion object {
-        private const val DB_NAME = "history.db"
+        const val DB_NAME = "history.db"
         private const val DB_VERSION = 1
         private const val TABLE_NAME = "history"
         private const val COLUMN_ID = "id"
@@ -15,6 +19,19 @@ class HistoryDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DB_NAM
         private const val COLUMN_AP = "AP"
         private const val COLUMN_CAMERA = "CAMERA"
         private const val COLUMN_OCTA = "OCTA"
+
+        // 클래스의 인스턴스를 저장하는 변수
+        // @Volatile은 instance 변수가 여러 스레드에서 동시에 접근할 수 있음을 명시
+        // 스레드 간 캐시 일관성을 보장하고, 한 스레드가 변수 값을 변경하면 다른 스레드에서 즉시 변경된 값을 볼 수 있도록 함
+        @Volatile
+        private var instance: HistoryDatabaseHelper? = null
+
+        // 싱글턴 인스턴스 반환 (더블 체킹 방식) -> 멀티스레드 환경에서 안전
+        fun getInstance(context: Context): HistoryDatabaseHelper {
+            return instance ?: synchronized(this) {
+                instance ?: HistoryDatabaseHelper(context).also { instance = it }
+            }
+        }
     }
 
     override fun onCreate(db: SQLiteDatabase) {

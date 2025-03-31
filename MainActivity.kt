@@ -10,14 +10,22 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var dbHelper: HistoryDatabaseHelper
-    private var FLAG: Boolean = true
+    private var FLAG: Boolean = false
+    private lateinit var historyDatabaseHelper: HistoryDatabaseHelper
+    private lateinit var changesDatabaseHelper: ChangesDatabaseHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        dbHelper = HistoryDatabaseHelper(this)
+        // Application 클래스에서 dbHelper 가져오기
+        historyDatabaseHelper = (application as MyApplication).historyDbHelper
+        changesDatabaseHelper = (application as MyApplication).changesDbHelper
+
+        // DB 경로 확인 로그 추가
+        val dbPath = getDatabasePath(HistoryDatabaseHelper.DB_NAME).absolutePath
+        Log.d("MainActivity", "Database Path: $dbPath")
+
         val button: Button = findViewById(R.id.button_load)
         val buttonShow: Button = findViewById(R.id.button_show)
         val buttonReset: Button = findViewById(R.id.button_reset)
@@ -38,21 +46,21 @@ class MainActivity : AppCompatActivity() {
             Log.d("MainActivity", "수정된 JSON: ${jsonObject.toString()}")
 
             if (jsonObject != null) {
-                dbHelper.insertHistory(jsonObject)
+                historyDatabaseHelper.insertHistory(jsonObject)
                 Log.d("MainActivity", "JSON 데이터가 DB에 저장되었습니다.")
 
                 // 저장된 데이터 출력
-                dbHelper.getAllHistory()
+                historyDatabaseHelper.getAllHistory()
             }
         }
 
         buttonShow.setOnClickListener {
-            dbHelper.getAllHistory()
+            historyDatabaseHelper.getAllHistory()
         }
 
 
         buttonReset.setOnClickListener {
-            dbHelper.clearDatabase() // 🔥 테이블 초기화
+            historyDatabaseHelper.clearDatabase() // 🔥 테이블 초기화
             Log.d("MainActivity", "DB 초기화 완료!")
         }
 
